@@ -14,4 +14,6 @@ services:
     volumes:
       - .:/app                  
     working_dir: /app
+    env_file:                   # <-- ADD THIS BLOCK
+      - .env                    # <-- Points to your .env file
     #command: python web_app.py  # Automatically starts the web server on boot!

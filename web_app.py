@@ -2,16 +2,19 @@ from flask import Flask, Response
 import cv2
 import time
 from ultralytics import YOLO
-
+import os
+os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
 app = Flask(__name__)
 
 print("Loading OpenVINO model...")
 model = YOLO("yolo26n-seg_openvino_model/")
 
+RTSP_URL = os.getenv('CAMERA01PASSWORD')
+
 def generate_frames():
     #cap = cv2.VideoCapture(0) 
     # Format: rtsp://username:password@IP_ADDRESS:554/stream1
-    cap = cv2.VideoCapture("")
+    cap = cv2.VideoCapture(RTSP_URL)
     
     # Initialize variables for FPS calculation
     prev_time = 0
@@ -22,7 +25,7 @@ def generate_frames():
             break
             
         # 1. Run YOLO inference on your Intel GPU
-        results = model(frame, imgsz=640, device="intel:gpu", verbose=False)
+        results = model(frame, imgsz=640, device="cpu", verbose=False)
         
         # 2. Calculate FPS
         current_time = time.time()
