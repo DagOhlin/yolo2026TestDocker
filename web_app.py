@@ -9,7 +9,9 @@ print("Loading OpenVINO model...")
 model = YOLO("yolo26n-seg_openvino_model/")
 
 def generate_frames():
-    cap = cv2.VideoCapture(0) 
+    #cap = cv2.VideoCapture(0) 
+    # Format: rtsp://username:password@IP_ADDRESS:554/stream1
+    cap = cv2.VideoCapture("")
     
     # Initialize variables for FPS calculation
     prev_time = 0
