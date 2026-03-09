@@ -18,7 +18,8 @@ app = Flask(__name__)
 logging.info("Loading OpenVINO model...")
 model = YOLO("yolo26n-seg_openvino_model/")
 
-RTSP_URL = os.getenv('CAMERA01PASSWORD')
+#RTSP_URL = os.getenv('CAMERA01PASSWORD')
+RTSP_URL = 0
 
 def generate_frames():
     # Initial connection attempt
