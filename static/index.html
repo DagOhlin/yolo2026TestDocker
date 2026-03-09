@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YOLO2026 Dashboard</title>
+  <meta name="description" content="Real-time YOLO2026 object detection dashboard with camera control and class filtering">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1><span>YOLO</span>2026</h1>
+    <div class="status-pill">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Video Feed -->
+    <div class="video-wrapper">
+      <img id="videoFeed" src="/video_feed" alt="YOLO live feed">
+      <div class="video-overlay">
+        <div class="stat-badge" id="fpsBadge">FPS: —</div>
+        <div class="stat-badge" id="latencyBadge">Latency: —</div>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <!-- Camera Source -->
+      <div class="card">
+        <div class="card-title">Camera Source</div>
+        <div class="source-btns" id="sourceBtns"></div>
+      </div>
+
+      <!-- Class Filter -->
+      <div class="card">
+        <div class="card-title">Detection Classes</div>
+        <div class="class-controls">
+          <button onclick="selectAll()">All</button>
+          <button onclick="selectNone()">None</button>
+        </div>
+        <div id="classFilter"></div>
+        <button class="apply-btn" id="applyBtn" onclick="applyClasses()">Apply</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
