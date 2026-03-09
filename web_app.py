@@ -57,12 +57,16 @@ CLASS_CATEGORIES = {
 }
 
 # ── Shared mutable state ──
-RTSP_URL = os.getenv('CAMERA01PASSWORD', '')
+_raw = os.getenv('CAMERA01PASSWORD', '')
+RTSP_URL = _raw.strip() if _raw else None
 WEBCAM_INDEX = 0
+
+# Default to RTSP if available (webcam may not be connected)
+_default_source = "rtsp" if RTSP_URL else "webcam"
 
 state_lock = threading.Lock()
 state = {
-    "source": "webcam",        # "webcam" or "rtsp"
+    "source": _default_source,
     "active_classes": [0, 14], # default: person + bird
     "fps": 0,
     "latency": 0,
@@ -70,6 +74,16 @@ state = {
 }
 
 cap = None  # managed inside generate_frames
+
+
+def open_capture(src):
+    """Open a VideoCapture with the right backend and settings."""
+    if isinstance(src, str) and src.startswith("rtsp"):
+        c = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
+        c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    else:
+        c = cv2.VideoCapture(src)
+    return c
 
 
 def get_capture_source():
@@ -82,35 +96,44 @@ def get_capture_source():
 def generate_frames():
     global cap
     src = get_capture_source()
-    cap = cv2.VideoCapture(src)
+    cap = open_capture(src)
     prev_time = 0
 
     while True:
         # Check if a source switch was requested
         with state_lock:
-            if state["switch_requested"]:
+            switch = state["switch_requested"]
+            if switch:
                 state["switch_requested"] = False
-                if cap is not None:
-                    cap.release()
-                src = get_capture_source()
-                cap = cv2.VideoCapture(src)
-                prev_time = 0
-                logging.info(f"Switched camera source to: {state['source']} ({src})")
 
-        if not cap.isOpened():
+        if switch:
+            # Don't call cap.release() — FFmpeg's pthread_frame can
+            # abort the process on release. Just drop the reference.
+            cap = None
+            time.sleep(1.0)  # let FFmpeg threads wind down
+            src = get_capture_source()
+            cap = open_capture(src)
+            prev_time = 0
+            logging.info(f"Switched camera source to: {state['source']} ({src})")
+
+        if cap is None or not cap.isOpened():
             logging.error("Camera not available. Retrying in 5s...")
             time.sleep(5)
             src = get_capture_source()
-            cap = cv2.VideoCapture(src)
+            cap = open_capture(src)
             continue
 
         success, frame = cap.read()
         if not success:
             logging.warning("Failed to grab frame. Reconnecting in 5s...")
-            cap.release()
+            try:
+                cap.release()
+            except Exception:
+                pass
+            cap = None
             time.sleep(5)
             src = get_capture_source()
-            cap = cv2.VideoCapture(src)
+            cap = open_capture(src)
             continue
 
         # Get active classes (thread-safe read)
